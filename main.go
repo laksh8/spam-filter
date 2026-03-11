@@ -9,6 +9,15 @@ import (
 	"strings"
 )
 
+func tokenizer(contents []byte) []string {
+	var tokens []string
+	for token := range strings.FieldsSeq(string(contents)) {
+		tokens = append(tokens, strings.ToUpper(token))
+	}
+
+	return tokens
+}
+
 func main() {
 	freqs := map[string]int{}
 	err := filepath.WalkDir("data/enron1", func(path string, d fs.DirEntry, err error) error {
@@ -17,10 +26,12 @@ func main() {
 		}
 
 		contents, err := os.ReadFile(path)
-		tokens := strings.FieldsSeq(string(contents)) // iter yields the same as Fields() without constructing slice
+		if err != nil {
+			return err
+		}
 
-		for token := range tokens {
-			freqs[strings.ToUpper(token)] += 1
+		for _, token := range tokenizer(contents) {
+			freqs[token] += 1
 		}
 
 		return nil
