@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -12,5 +13,15 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println(string(contents))
+	freqs := map[string]int{}
+	tokens := strings.FieldsSeq(string(contents)) // iter yields the same as Fields() without constructing slice
+
+	for token := range tokens {
+		freqs[strings.ToUpper(token)] += 1
+	}
+
+	for token, freq := range freqs {
+		fmt.Printf("%s ==> %d\n", token, freq)
+	}
+
 }
