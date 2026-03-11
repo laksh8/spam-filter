@@ -2,22 +2,32 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
+	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 func main() {
-	contents, err := os.ReadFile("data/enron1/ham/0015.1999-12-15.farmer.ham.txt")
+	freqs := map[string]int{}
+	err := filepath.WalkDir("data/enron1", func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			return nil
+		}
+
+		contents, err := os.ReadFile(path)
+		tokens := strings.FieldsSeq(string(contents)) // iter yields the same as Fields() without constructing slice
+
+		for token := range tokens {
+			freqs[strings.ToUpper(token)] += 1
+		}
+
+		return nil
+	})
 
 	if err != nil {
-		panic(err)
-	}
-
-	freqs := map[string]int{}
-	tokens := strings.FieldsSeq(string(contents)) // iter yields the same as Fields() without constructing slice
-
-	for token := range tokens {
-		freqs[strings.ToUpper(token)] += 1
+		log.Fatalf("Err walk: %v", err)
 	}
 
 	totalCount := 0
