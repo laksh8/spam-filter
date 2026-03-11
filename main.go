@@ -20,8 +20,13 @@ func main() {
 		freqs[strings.ToUpper(token)] += 1
 	}
 
+	totalCount := 0
+	for _, freqs := range freqs {
+		totalCount += freqs
+	}
+
 	for token, freq := range freqs {
-		fmt.Printf("%s ==> %d\n", token, freq)
+		fmt.Printf("%v ==> %v\n", token, float64(freq)/float64(totalCount))
 	}
 
 }
