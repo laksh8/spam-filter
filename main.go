@@ -11,6 +11,7 @@ import (
 )
 
 type Bow map[string]int // bag of words
+const THRESHOLD = 100
 
 func Tokenize(contents []byte) []string {
 	var tokens []string
@@ -25,6 +26,9 @@ func TotalCount(bow Bow) int {
 	count := 0
 
 	for token := range bow {
+		if bow[token] < THRESHOLD {
+			continue
+		}
 		count += bow[token]
 	}
 
@@ -53,24 +57,42 @@ func AddFileToBow(path string, bow Bow) error {
 	return nil
 }
 
-func Classify(bow Bow, hamBow Bow, spamBow Bow, totalCount int) (int, int) {
-	// Document probability
+func Classify(bow Bow, ham Bow, spam Bow, hamTotalCount int, spamTotalCount int, hamProbability float64, spamProbability float64) (float64, float64) {
+	totalCount := spamTotalCount + hamTotalCount
+
 	docProbableScore := 0.0
+	spamProbableScore := 0.0
+	hamProbableScore := 0.0
+
 	for token := range bow {
-		probable := float64(bow[token]) / float64(totalCount)
-		if probable == 0 {
+		n := spam[token] + ham[token]
+		if n < THRESHOLD {
 			continue
 		}
-		docProbableScore += math.Log(probable)
-	}
-	fmt.Printf("Doc probable score => %v", docProbableScore)
 
-	return 0, 0
+		if ham[token] > 0 {
+			hamProbableScore += math.Log(float64(ham[token]) / float64(hamTotalCount))
+		}
+
+		if spam[token] > 0 {
+			spamProbableScore += math.Log(float64(spam[token]) / float64(spamTotalCount))
+		}
+
+		if n == 0 {
+			continue
+		}
+		docProbableScore += math.Log(float64(bow[token]) / float64(totalCount))
+	}
+	hamp := hamProbableScore + hamProbability - docProbableScore
+	spamp := spamProbableScore + spamProbability - docProbableScore
+
+	return hamp, spamp
 }
 
 func main() {
 	ham := Bow{}
 	spam := Bow{}
+	unseen := Bow{}
 
 	fmt.Println("Training...")
 	for i := range 5 {
