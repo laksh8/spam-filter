@@ -9,7 +9,9 @@ import (
 	"strings"
 )
 
-func tokenizer(contents []byte) []string {
+type Bow map[string]int // bag of words
+
+func Tokenize(contents []byte) []string {
 	var tokens []string
 	for token := range strings.FieldsSeq(string(contents)) {
 		tokens = append(tokens, strings.ToUpper(token))
@@ -18,9 +20,18 @@ func tokenizer(contents []byte) []string {
 	return tokens
 }
 
-func main() {
-	freqs := map[string]int{}
-	err := filepath.WalkDir("data/enron1", func(path string, d fs.DirEntry, err error) error {
+func TotalCount(bow Bow) int {
+	count := 0
+
+	for token := range bow {
+		count += bow[token]
+	}
+
+	return count
+}
+
+func AddDirToBow(path string, bow Bow) error {
+	return filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			return nil
 		}
@@ -30,24 +41,29 @@ func main() {
 			return err
 		}
 
-		for _, token := range tokenizer(contents) {
-			freqs[token] += 1
+		for _, token := range Tokenize(contents) {
+			bow[token] += 1
 		}
 
 		return nil
 	})
+}
 
-	if err != nil {
-		log.Fatalf("Err walk: %v", err)
-	}
+func main() {
+	ham := Bow{}
+	spam := Bow{}
 
-	totalCount := 0
-	for _, freqs := range freqs {
-		totalCount += freqs
-	}
+	fmt.Println("Training...")
+	for i := range 5 {
+		err := AddDirToBow(fmt.Sprintf("data/enron%v/ham", i+1), ham)
+		if err != nil {
+			log.Fatalf("Err walk: %v", err)
+		}
 
-	for token, freq := range freqs {
-		fmt.Printf("%v ==> %v\n", token, float64(freq)/float64(totalCount))
+		err = AddDirToBow(fmt.Sprintf("data/enron%v/spam", i+1), spam)
+		if err != nil {
+			log.Fatalf("Err walk: %v", err)
+		}
 	}
 
 }
