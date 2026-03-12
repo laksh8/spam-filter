@@ -107,4 +107,24 @@ func main() {
 		}
 	}
 
+	fmt.Println("Classifying...")
+
+	err := AddFileToBow("data/enron6/ham/0043.2000-06-14.lokay.ham.txt", unseen)
+	if err != nil {
+		log.Fatalf("Err walk classify data: %v", err)
+	}
+	hamTotalCount := TotalCount(ham)
+	spamTotalCount := TotalCount(spam)
+	totalCount := hamTotalCount + spamTotalCount
+
+	spamProbable := math.Log(float64(spamTotalCount) / float64(totalCount))
+	hamProbable := math.Log(float64(hamTotalCount) / float64(totalCount))
+
+	h, s := Classify(unseen, ham, spam, hamTotalCount, spamTotalCount, hamProbable, spamProbable)
+
+	n := h + s
+
+	fmt.Printf("Ham probability ==> %v\n", h/n)
+	fmt.Printf("Spam probability ==> %v\n", s/n)
+
 }
